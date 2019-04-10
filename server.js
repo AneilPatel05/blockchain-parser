@@ -34,7 +34,8 @@ const getTransactions = ops => {
     const type = op.op[0];
     const params = op.op[1];
     switch (type) {
-      case 'transfer' || 'vote': {
+      //validate fundition support rxns, calculate and send rewards
+      case 'transfer': {
         /** Find transfer */
         const transaction = {
           type: 'transfer',
@@ -47,7 +48,84 @@ const getTransactions = ops => {
         };
         //store to mongodb if from is swapsteem
         if(transaction.to ==='swapsteem'){
-         console.log('Transfer : ', JSON.stringify(op));
+         console.log('Transfer : ', JSON.stringify(transaction));
+        }
+        break;
+        /** Add Cases for all transactionTYPES */
+        
+      }
+      //validate fundition support rxns, calculate and send reward
+      case 'custom_json': {
+        /** Find transfer */
+        const transaction = {
+          type: 'transfer',
+          required_auths: params.required_auths,
+          required_posting_auths: params.required_posting_auths,
+          memo: params.memo,
+          json:params.json,
+          timestamp: Date.parse(op.timestamp) / 1000,
+          block: op.block,
+        };
+        //store to mongodb if following is swapsteem
+        if(transaction.json.following ==='swapsteem'){
+         console.log('Follow : ', JSON.stringify(transaction));
+        }
+        if(transaction.json.author ==='swapsteem'){
+          console.log('Resteem : ', JSON.stringify(transaction));
+         }
+        break;
+        /** Add Cases for all transactionTYPES */
+        
+      }
+      //validate fundition support rxns, calculate and send reward
+      case 'comment': {
+        /** Find transfer */
+        const transaction = {
+          type: 'comment',
+          parent_author	: params.parent_author,
+          parent_permlink: params.parent_permlink,
+          author: params.reward_sbd,
+          permlink:params.permlink,
+          title:params.title,
+          body:params.body,
+          json_metadata:params.json_metadata,
+          timestamp: Date.parse(op.timestamp) / 1000,
+          block: op.block,
+        };
+        //Posting a promotional video on dTube #swapsteem,#dtube
+        if(transaction.author ==='swapsteem'){
+         console.log('Post Reward By Admin : ', JSON.stringify(transaction));
+         //if comment send
+        }
+        break;
+        /** Add Cases for all transactionTYPES */
+        
+      }
+      //validate fundition support rxns, calculate and send reward
+      case 'claim_reward_balance': {
+        /** Find transfer */
+        const transaction = {
+          type: 'claim_reward_balance',
+          account: params.account,
+          reward_steem: params.reward_steem,
+          reward_sbd: params.reward_sbd,
+          reward_vests:params.reward_vests,
+          timestamp: Date.parse(op.timestamp) / 1000,
+          block: op.block,
+        };
+        //store to mongodb if from is swapsteem
+        if(transaction.account ==='swapsteem'){
+         console.log('Claim Rewards : ', JSON.stringify(transaction));
+         //check if block num more than airdrop start block 
+
+         //get voters list
+         
+         //calculate STU
+
+         //CalculateUpvoteRewards 
+
+         //SendSweet
+
         }
         break;
         /** Add Cases for all transactionTYPES */
@@ -60,7 +138,7 @@ const getTransactions = ops => {
 };
 
 const loadBlock = blockNum => {
-  console.log('in blocknum and loading block Num '+blockNum)
+ // console.log('in blocknum and loading block Num '+blockNum)
   utils
     .getOpsInBlock(blockNum, false)
     .then(ops => {
@@ -93,7 +171,7 @@ const loadBlock = blockNum => {
         console.log
        Block.findOneAndUpdateAsync({},{'blockNum':blockNum})
        .then(function (block) {
-           console.log("Saving block no :"+block)
+           //console.log("Saving block no :"+block)
            var flag = getTransactions(ops);
            flag === true ? loadNextBlock():loadBlock(blockNum)
          }).catch(ValidationError, function(err) {
@@ -112,24 +190,24 @@ const loadBlock = blockNum => {
 
 const loadNextBlock = () => {
     Block.findOne().lean().then(function(foundItems){
-      console.log("last_block num : " +foundItems)
+      console.log("last_block num : #" +foundItems.blockNum)
 
       let nextBlockNum = null;
       if(foundItems!==null){
        nextBlockNum = parseInt(foundItems.blockNum)+1;
        console.log("Now processing next block : #"+nextBlockNum)
       }else{
-       nextBlockNum =  31913550  ;// testing purpose
+       nextBlockNum =  31880016  ;// testing purpose
       }
      utils
        .getGlobalProps()
        .then(globalProps => {
-         console.log("globalProps "+globalProps)
+        // console.log("globalProps "+globalProps)
          const lastIrreversibleBlockNum = globalProps.last_irreversible_block_num;
          if (lastIrreversibleBlockNum >= nextBlockNum) {
-           console.log("calling loadblock()"+nextBlockNum)
+           //console.log("calling loadblock()"+nextBlockNum)
            loadBlock(nextBlockNum);
-           console.log("calling loadblock() done "+nextBlockNum)
+           //console.log("calling loadblock() done "+nextBlockNum)
          } else {
            utils.sleep(2000).then(() => {
              console.log(
